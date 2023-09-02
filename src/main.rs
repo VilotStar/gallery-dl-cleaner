@@ -4,7 +4,7 @@ pub mod cli;
 pub mod handlers;
 
 use cli::Cli;
-use handlers::{dotparty::DotPartyHandler, HandlerImpl, HandlerError};
+use handlers::{dotparty::DotPartyHandler, HandlerError, HandlerImpl};
 use thiserror::Error;
 
 // Example file name: e621_3650669_48a64dcda61894b2a05494204efcd113.jpg
@@ -16,7 +16,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum MainError {
     #[error("Handler Error {0:#?}")]
-    HandlerError(HandlerError)
+    HandlerError(HandlerError),
 }
 
 fn main() -> Result<(), MainError> {
@@ -25,7 +25,17 @@ fn main() -> Result<(), MainError> {
     match cli.subcommand {
         cli::HandlerCommand::E621 => todo!(),
         cli::HandlerCommand::DotParty => {
-            DotPartyHandler::handle(&cli).map_err(|err| MainError::HandlerError(err))?;
+            let handler = DotPartyHandler::new(&cli.path, cli.update.clone());
+
+            if cli.update.as_ref().is_some() {
+                handler
+                    .update()
+                    .map_err(|err| MainError::HandlerError(err))?;
+            }
+
+            handler
+                .handle()
+                .map_err(|err| MainError::HandlerError(err))?;
         }
     }
 
